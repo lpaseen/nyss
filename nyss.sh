@@ -37,8 +37,8 @@ LOGFILE=$LOGDIR/$BASENAME.log
 PIDFILE=/var/run/$BASENAME.pid
 [ -w /var/run ] && PIDFILE=/var/run/$BASENAME.pid || PIDFILE=${TMPDIR:=$HOME/tmp}/$BASENAME.pid
 
-[ ! -d ${PIDFILE%/.*} ] && mkdir -p ${PIDFILE%/.*}
-[ ! -d ${PIDFILE%/.*} ] && echo "ERROR, can't save pid file in ${PIDFILE%/.*} - ABORT" && exit 92
+[ ! -d ${PIDFILE%/*} ] && mkdir -p ${PIDFILE%/*}
+[ ! -d ${PIDFILE%/*} ] && echo "ERROR, can't save pid file in ${PIDFILE%/.*} - ABORT" && exit 92
 
 #check that it's not already running
 MYPID=$$
@@ -91,6 +91,7 @@ while  [ -e "${PIDFILE}" ];do
     CollectData ps_auxwww_pcpu $DEFRETENTION "ps auxww --sort=-pcpu|head -33"
     CollectData ps_auxwww_rss  $DEFRETENTION "ps auxww --sort=-rss|head -33"
     CollectData ps_auxwww_vsz  $DEFRETENTION "ps auxww --sort=-vsz|head -33"
+    CollectData top            $DEFRETENTION "top -b -c -n 2 -i"
     CollectData free           $DEFRETENTION "free"
     CollectData vmstat         $DEFRETENTION "vmstat 1 5"
     CollectData iostat         $DEFRETENTION 'LINES=$(iostat -tNkx|wc -l);iostat -tNkx 2 2|sed -n "$(($LINES+1)),\$p"'

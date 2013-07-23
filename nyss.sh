@@ -7,10 +7,12 @@
 #History:
 #2013-07-12  Peter Sjoberg <peter.sjoberg@hp.com>
 #       Ver alpha 0.01
+#2013-07-23  Peter Sjoberg <peter.sjoberg@hp.com>
+#	Fixed up misc bugs, added "ps auxf" and "top"
 #
 #TODO:
-# Add code to have max size of $ARCHIVE and a min free o the disk
-#   starting to create oldest files once limit is reached
+# Add code to have max size of $ARCHIVE and a min free on the disk
+#   starting to delete oldest files once limit is reached
 # Upload files to central location
 # Handle errors
 # Allow different log interval
@@ -59,9 +61,14 @@ fi
 
 trap "rm -f $PIDFILE; exit" INT TERM
 
+
+#set up a few more columns for apps that limits the output
+export COLUMNS=511
+
+
 #Default values, can be overridden later
 DEFINTERVAL=60 # unit seconds, save every 60 secods
-DEFRETENTION=$((24*2)) # unit hours, keep 2 days
+DEFRETENTION=$((24*2)) # hours, keep 2 days
 
 ################################################################
 #Run a command and save the data to a logfile
@@ -71,7 +78,7 @@ CollectData(){
     RET="$2"
     cmd="$3"
     eval "$cmd" >>$ARCHIVE/${logname}_$NOW.log 2>&1
-    find $ARCHIVE/ -name "${logname}_*.log" -mtime +$(($RET*60))
+    find $ARCHIVE/ -name "${logname}_*.log" -mmin +$(($RET*60)) -exec rm "{}" \;
 } # CollectData
 
 
@@ -84,21 +91,28 @@ CollectData(){
 # but for now we keep down the load with just a simple "sleep 60"
 #
 
-echo "Saving log to $LOGFILE"
-echo "Saving archive to $ARCHIVE"
+echo $(date +%F\ %T) "Using pid file $PIDFILE"
+echo $(date +%F\ %T) "Saving log to $LOGFILE"
+echo $(date +%F\ %T) "Saving archive to $ARCHIVE"
 while  [ -e "${PIDFILE}" ];do
     NOW=$(date +%F_%H%M%S)
-    CollectData ps_auxwww_pcpu $DEFRETENTION "ps auxww --sort=-pcpu|head -33"
-    CollectData ps_auxwww_rss  $DEFRETENTION "ps auxww --sort=-rss|head -33"
-    CollectData ps_auxwww_vsz  $DEFRETENTION "ps auxww --sort=-vsz|head -33"
-    CollectData top            $DEFRETENTION "top -b -c -n 2 -i"
-    CollectData free           $DEFRETENTION "free"
-    CollectData vmstat         $DEFRETENTION "vmstat 1 5"
-    CollectData iostat         $DEFRETENTION 'LINES=$(iostat -tNkx|wc -l);iostat -tNkx 2 2|sed -n "$(($LINES+1)),\$p"'
+    CollectData ps_auxww_pcpu $DEFRETENTION "ps auxww --sort=-pcpu|head -33"
+    CollectData ps_auxww_rss  $DEFRETENTION "ps auxww --sort=-rss|head -33"
+    CollectData ps_auxww_vsz  $DEFRETENTION "ps auxww --sort=-vsz|head -33"
+    CollectData ps_auxfww     $DEFRETENTION "ps auxfww"
+    CollectData top           $DEFRETENTION "top -w $COLUMNS -b -c -n 2 -i"
+    CollectData free          $DEFRETENTION "free"
+    CollectData vmstat        $DEFRETENTION "vmstat 1 5"
+    CollectData iostat        $DEFRETENTION 'LINES=$(iostat -tNkx|wc -l);iostat -tNkx 2 2|sed -n "$(($LINES+1)),\$p"'
 #
     CollectData netstat_a $DEFRETENTION "netstat -ntulpae"
     CollectData netstat_i $DEFRETENTION "netstat -i"
     CollectData netstat_s $DEFRETENTION "netstat -s"
     sleep $DEFINTERVAL
 done
+
+echo $(date +%F\ %T) "Pidfile gone -Exited while loop"
+echo $(date +%F\ %T) "Pidfile gone -Exited while loop" >>$LOGFILE 
+
+#Should never exist
 rm -f $PIDFILE

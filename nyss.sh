@@ -14,6 +14,8 @@
 #2014-03-23  Peter Sjoberg <peter.sjoberg@hp.com>
 #	Add hostname to archive directory
 #	if /var/run isn't writable, keep the pidfile to $BASEDIR/run
+#2014-03-24  Peter Sjoberg <peter.sjoberg@hp.com>
+#	Added hostname also to pidfile path to handle when run from shared directory
 #
 #TODO:
 # Add code to have max size of $ARCHIVE and a min free on the disk
@@ -43,7 +45,7 @@ ARCHIVE=$BASEDIR/archive-${HOSTNAME%%.*}
 
 LOGFILE=$LOGDIR/$BASENAME.log
 PIDFILE=/var/run/$BASENAME.pid
-[ -w /var/run ] && PIDFILE=/var/run/$BASENAME.pid || PIDFILE=${BASEDIR}/run/$BASENAME.pid
+[ -w /var/run ] && PIDFILE=/var/run/$BASENAME.pid || PIDFILE=${BASEDIR}/run-${HOSTNAME%%.*}/$BASENAME.pid
 [ ! -d ${PIDFILE%/*} ] && mkdir -p ${PIDFILE%/*}
 [ ! -d ${PIDFILE%/*} ] && echo "ERROR, can't save pid file in ${PIDFILE%/.*} - ABORT" && exit 92
 

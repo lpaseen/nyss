@@ -21,3 +21,4 @@ archive-defiant2
 StartOnAllNodes.sh
 run
 StartOnAllNodes.sh~
+run-*

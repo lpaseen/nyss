@@ -9,6 +9,11 @@
 #       Ver alpha 0.01
 #2013-07-23  Peter Sjoberg <peter.sjoberg@hp.com>
 #	Fixed up misc bugs, added "ps auxf" and "top"
+#2013-09-02  Peter Sjoberg <peter.sjoberg@hp.com>
+#	datestamp the archive directory
+#2014-03-23  Peter Sjoberg <peter.sjoberg@hp.com>
+#	Add hostname to archive directory
+#	if /var/run isn't writable, keep the pidfile to $BASEDIR/run
 #
 #TODO:
 # Add code to have max size of $ARCHIVE and a min free on the disk
@@ -24,10 +29,11 @@
 
 BASEDIR=${0%/*}
 BASENAME=$(basename $0 .sh)
+[ "$BASEDIR" == ${0} ] && BASEDIR=$PWD
 [ "${BASEDIR}" == "." ] && BASEDIR=$PWD
 
 LOGDIR=$BASEDIR/logs
-ARCHIVE=$BASEDIR/archive
+ARCHIVE=$BASEDIR/archive-${HOSTNAME%%.*}
 [ ! -d $LOGDIR ] && mkdir -p $LOGDIR
 [ ! -d $LOGDIR ] && echo "ERROR, can't create LOGDiR $LOGDIR - ABORT" && exit 90
 
@@ -37,8 +43,7 @@ ARCHIVE=$BASEDIR/archive
 
 LOGFILE=$LOGDIR/$BASENAME.log
 PIDFILE=/var/run/$BASENAME.pid
-[ -w /var/run ] && PIDFILE=/var/run/$BASENAME.pid || PIDFILE=${TMPDIR:=$HOME/tmp}/$BASENAME.pid
-
+[ -w /var/run ] && PIDFILE=/var/run/$BASENAME.pid || PIDFILE=${BASEDIR}/run/$BASENAME.pid
 [ ! -d ${PIDFILE%/*} ] && mkdir -p ${PIDFILE%/*}
 [ ! -d ${PIDFILE%/*} ] && echo "ERROR, can't save pid file in ${PIDFILE%/.*} - ABORT" && exit 92
 
@@ -48,10 +53,12 @@ NOWSTAT="$(date +%F\ %T)"
 if ( set -o noclobber; echo "$MYPID" > "$PIDFILE") 2> /dev/null; then
     echo "$NOWSTAT; Created lockfile $PIDFILE for PID $MYPID" >>$LOGFILE
 else
-    # Is it a correct pid ?
+    # already three, is it a valid pid ?
     if  strings /proc/$(cat $PIDFILE)/cmdline|grep -q ${0##*/};then
-        echo "$NOWSTAT; Lockfile $PIDFILE FOUND, ABORT" >>$LOGFILE
-        ps -p $(cat $PIDFILE) >>$LOGFILE 2>&1
+	if [ -n "$VERBOSE" ];then
+            echo "$NOWSTAT; Lockfile $PIDFILE FOUND, ABORT" >>$LOGFILE
+            ps -p $(cat $PIDFILE) >>$LOGFILE 2>&1
+	fi
         exit
     else
         echo "Stale pidfile found, deleting it." >>$LOGFILE 
@@ -77,7 +84,8 @@ CollectData(){
     logname="$1"
     RET="$2"
     cmd="$3"
-    eval "$cmd" >>$ARCHIVE/${logname}_$NOW.log 2>&1
+    [ ! -d $ARCHIVE/${TODAY} ] && mkdir -p $ARCHIVE/${TODAY}
+    eval "$cmd" >>$ARCHIVE/${TODAY}/${logname}_$NOW.log 2>&1
     find $ARCHIVE/ -name "${logname}_*.log" -mmin +$(($RET*60)) -exec rm "{}" \;
 } # CollectData
 
@@ -96,6 +104,7 @@ echo $(date +%F\ %T) "Saving log to $LOGFILE"
 echo $(date +%F\ %T) "Saving archive to $ARCHIVE"
 while  [ -e "${PIDFILE}" ];do
     NOW=$(date +%F_%H%M%S)
+    TODAY=$(date +%F)
     CollectData ps_auxww_pcpu $DEFRETENTION "ps auxww --sort=-pcpu|head -33"
     CollectData ps_auxww_rss  $DEFRETENTION "ps auxww --sort=-rss|head -33"
     CollectData ps_auxww_vsz  $DEFRETENTION "ps auxww --sort=-vsz|head -33"
@@ -108,6 +117,10 @@ while  [ -e "${PIDFILE}" ];do
     CollectData netstat_a $DEFRETENTION "netstat -ntulpae"
     CollectData netstat_i $DEFRETENTION "netstat -i"
     CollectData netstat_s $DEFRETENTION "netstat -s"
+#
+    # delete empty dates directories
+    rmdir $ARCHIVE/20[1-9][0-9]-[0-1][0-9]-[0-3][0-9] &>/dev/null # ignore errors due to not empty
+
     sleep $DEFINTERVAL
 done
 

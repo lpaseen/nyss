@@ -17,3 +17,7 @@ pm_to_blib
 archive
 logs
 nyss.log
+archive-defiant2
+StartOnAllNodes.sh
+run
+StartOnAllNodes.sh~

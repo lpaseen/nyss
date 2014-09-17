@@ -5,18 +5,18 @@
 #License: GPL
 #
 #History:
-#2013-07-12  Peter Sjoberg <peter.sjoberg@hp.com>
+#2013-07-12  Peter Sjoberg <peters-gh@techwiz.ca>
 #       Ver alpha 0.01
-#2013-07-23  Peter Sjoberg <peter.sjoberg@hp.com>
+#2013-07-23  Peter Sjoberg <peters-gh@techwiz.ca>
 #	Fixed up misc bugs, added "ps auxf" and "top"
-#2013-09-02  Peter Sjoberg <peter.sjoberg@hp.com>
+#2013-09-02  Peter Sjoberg <peters-gh@techwiz.ca>
 #	datestamp the archive directory
-#2014-03-23  Peter Sjoberg <peter.sjoberg@hp.com>
+#2014-03-23  Peter Sjoberg <peters-gh@techwiz.ca>
 #	Add hostname to archive directory
 #	if /var/run isn't writable, keep the pidfile to $BASEDIR/run
-#2014-03-24  Peter Sjoberg <peter.sjoberg@hp.com>
+#2014-03-24  Peter Sjoberg <peters-gh@techwiz.ca>
 #	Added hostname also to pidfile path to handle when run from shared directory
-#2014-09-17  Peter Sjoberg <peter.sjoberg@hp.com>
+#2014-09-17  Peter Sjoberg <peters-gh@techwiz.ca>
 #	Compress older days - so we can ceep a few more days without eating up all disk space
 #
 #TODO:

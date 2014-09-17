@@ -16,6 +16,8 @@
 #	if /var/run isn't writable, keep the pidfile to $BASEDIR/run
 #2014-03-24  Peter Sjoberg <peter.sjoberg@hp.com>
 #	Added hostname also to pidfile path to handle when run from shared directory
+#2014-09-17  Peter Sjoberg <peter.sjoberg@hp.com>
+#	Compress older days - so we can ceep a few more days without eating up all disk space
 #
 #TODO:
 # Add code to have max size of $ARCHIVE and a min free on the disk
@@ -78,6 +80,7 @@ export COLUMNS=511
 #Default values, can be overridden later
 DEFINTERVAL=60 # unit seconds, save every 60 secods
 DEFRETENTION=$((24*2)) # hours, keep 2 days
+TARRETENTION=14 # days, keep tar files for 14 days
 
 ################################################################
 #Run a command and save the data to a logfile
@@ -107,10 +110,12 @@ echo $(date +%F\ %T) "Saving archive to $ARCHIVE"
 while  [ -e "${PIDFILE}" ];do
     NOW=$(date +%F_%H%M%S)
     TODAY=$(date +%F)
+
     CollectData ps_auxww_pcpu $DEFRETENTION "ps auxww --sort=-pcpu|head -33"
     CollectData ps_auxww_rss  $DEFRETENTION "ps auxww --sort=-rss|head -33"
     CollectData ps_auxww_vsz  $DEFRETENTION "ps auxww --sort=-vsz|head -33"
     CollectData ps_auxfww     $DEFRETENTION "ps auxfww"
+    CollectData ps_axH        $DEFRETENTION "ps axH"
     CollectData top           $DEFRETENTION "top -w $COLUMNS -b -c -n 2 -i"
     CollectData free          $DEFRETENTION "free"
     CollectData vmstat        $DEFRETENTION "vmstat 1 5"
@@ -120,6 +125,15 @@ while  [ -e "${PIDFILE}" ];do
     CollectData netstat_i $DEFRETENTION "netstat -i"
     CollectData netstat_s $DEFRETENTION "netstat -s"
 #
+
+    # pack up yesterday (if not already done)
+    YESTERDAY=$(date +%F -d yesterday)
+    if [ ! -f $ARCHIVE/${YESTERDAY}.tar.bz2 ];then
+	[ -d $ARCHIVE/${YESTERDAY} ] && tar -cjf $ARCHIVE/${YESTERDAY}.tar.bz2 $ARCHIVE/${YESTERDAY}
+    fi
+    #and purge away very old tar files
+    find $ARCHIVE/ -name "*.tar.bz2" -mtime +$TARRETENTION -exec rm "{}" \;
+
     # delete empty dates directories
     rmdir $ARCHIVE/20[1-9][0-9]-[0-1][0-9]-[0-3][0-9] &>/dev/null # ignore errors due to not empty
 

@@ -1,6 +1,12 @@
 #!/bin/bash
+#
+#
+#
 
+BASEDIR=${0%/*}
+[ "$BASEDIR" == "." ] && BASEDIR=$PWD
 
+[ ! -d $BASEDIR/logs ] && mkdir -p $BASEDIR/logs
 NOW=$(date +%A_%H%M)
-$HOME/nyss/nyss.sh &>$HOME/nyss/logs/nyss_cron_$NOW.log
-[ ! -s $HOME/nyss/logs/nyss_cron_$NOW.log ]  && rm $HOME/nyss/logs/nyss_cron_$NOW.log
+$BASEDIR/nyss.sh &>$BASEDIR/logs/nyss_cron_$NOW.log
+[ ! -s $BASEDIR/logs/nyss_cron_$NOW.log ]  && rm $BASEDIR/logs/nyss_cron_$NOW.log

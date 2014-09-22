@@ -1,6 +1,8 @@
 #!/bin/bash
 #
 #Purpose: Save some logs of what the system look like at different points in time
+# possible usage: save it in ~/nyss and start with
+#	nohup ~/nyss/nyss.sh &>~/nyss/nyss.log &
 #
 #License: GPL
 #
@@ -18,6 +20,8 @@
 #	Added hostname also to pidfile path to handle when run from shared directory
 #2014-09-17  Peter Sjoberg <peters-gh@techwiz.ca>
 #	Compress older days - so we can ceep a few more days without eating up all disk space
+#2014-09-22  Peter Sjoberg <peters-gh@techwiz.ca>
+#	Don't save files if free space is <100MiB
 #
 #TODO:
 # Add code to have max size of $ARCHIVE and a min free on the disk
@@ -81,6 +85,7 @@ export COLUMNS=511
 DEFINTERVAL=60 # unit seconds, save every 60 secods
 DEFRETENTION=$((24*2)) # hours, keep 2 days
 TARRETENTION=14 # days, keep tar files for 14 days
+MINFREE=100 # Don't save anything if it's less than 100MiB free
 
 ################################################################
 #Run a command and save the data to a logfile
@@ -90,7 +95,7 @@ CollectData(){
     RET="$2"
     cmd="$3"
     [ ! -d $ARCHIVE/${TODAY} ] && mkdir -p $ARCHIVE/${TODAY}
-    eval "$cmd" >>$ARCHIVE/${TODAY}/${logname}_$NOW.log 2>&1
+    [ $(df -mP .|tail -1|awk '{print $4}') -gt $MINFREE ] &&  eval "$cmd" >>$ARCHIVE/${TODAY}/${logname}_$NOW.log 2>&1
     find $ARCHIVE/ -name "${logname}_*.log" -mmin +$(($RET*60)) -exec rm "{}" \;
 } # CollectData
 
@@ -115,7 +120,7 @@ while  [ -e "${PIDFILE}" ];do
     CollectData ps_auxww_rss  $DEFRETENTION "ps auxww --sort=-rss|head -33"
     CollectData ps_auxww_vsz  $DEFRETENTION "ps auxww --sort=-vsz|head -33"
     CollectData ps_auxfww     $DEFRETENTION "ps auxfww"
-    CollectData ps_axH        $DEFRETENTION "ps axH"
+    CollectData ps_axHwc      $DEFRETENTION "ps axH|wc -l"
     CollectData top           $DEFRETENTION "top -w $COLUMNS -b -c -n 2 -i"
     CollectData free          $DEFRETENTION "free"
     CollectData vmstat        $DEFRETENTION "vmstat 1 5"
@@ -129,7 +134,7 @@ while  [ -e "${PIDFILE}" ];do
     # pack up yesterday (if not already done)
     YESTERDAY=$(date +%F -d yesterday)
     if [ ! -f $ARCHIVE/${YESTERDAY}.tar.bz2 ];then
-	[ -d $ARCHIVE/${YESTERDAY} ] && tar -cjf $ARCHIVE/${YESTERDAY}.tar.bz2 $ARCHIVE/${YESTERDAY}
+	[ -d $ARCHIVE/${YESTERDAY} ] && echo "tar -cjf $ARCHIVE/${YESTERDAY}.tar.bz2 $ARCHIVE/${YESTERDAY}" && tar -cjf $ARCHIVE/${YESTERDAY}.tar.bz2 $ARCHIVE/${YESTERDAY}
     fi
     #and purge away very old tar files
     find $ARCHIVE/ -name "*.tar.bz2" -mtime +$TARRETENTION -exec rm "{}" \;

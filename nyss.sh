@@ -22,6 +22,8 @@
 #	Compress older days - so we can ceep a few more days without eating up all disk space
 #2014-09-22  Peter Sjoberg <peters-gh@techwiz.ca>
 #	Don't save files if free space is <100MiB
+#2015-01-27  Peter Sjoberg <peters-gh@techwiz.ca>
+#	Fixed syntax error with older version of top
 #
 #TODO:
 # Add code to have max size of $ARCHIVE and a min free on the disk
@@ -109,6 +111,10 @@ CollectData(){
 # but for now we keep down the load with just a simple "sleep 60"
 #
 
+
+#Not all versions of top has "-w"
+top -w 132 -n1 &>/dev/null && TOPCOL="-w $COLUMNS " || TOPCOL=""
+
 echo $(date +%F\ %T) "Using pid file $PIDFILE"
 echo $(date +%F\ %T) "Saving log to $LOGFILE"
 echo $(date +%F\ %T) "Saving archive to $ARCHIVE"
@@ -121,7 +127,7 @@ while  [ -e "${PIDFILE}" ];do
     CollectData ps_auxww_vsz  $DEFRETENTION "ps auxww --sort=-vsz|head -33"
     CollectData ps_auxfww     $DEFRETENTION "ps auxfww"
     CollectData ps_axHwc      $DEFRETENTION "ps axH|wc -l"
-    CollectData top           $DEFRETENTION "top -w $COLUMNS -b -c -n 2 -i"
+    CollectData top           $DEFRETENTION "top ${TOPCOL}-b -c -n 2 -i"
     CollectData free          $DEFRETENTION "free"
     CollectData vmstat        $DEFRETENTION "vmstat 1 5"
     CollectData iostat        $DEFRETENTION 'LINES=$(iostat -tNkx|wc -l);iostat -tNkx 2 2|sed -n "$(($LINES+1)),\$p"'

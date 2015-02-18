@@ -97,7 +97,10 @@ CollectData(){
     RET="$2"
     cmd="$3"
     [ ! -d $ARCHIVE/${TODAY} ] && mkdir -p $ARCHIVE/${TODAY}
-    [ $(df -mP .|tail -1|awk '{print $4}') -gt $MINFREE ] &&  eval "$cmd" >>$ARCHIVE/${TODAY}/${logname}_$NOW.log 2>&1
+    if [ $(df -mP .|tail -1|awk '{print $4}') -gt $MINFREE ];then
+	echo "#$cmd" >>$ARCHIVE/${TODAY}/${logname}_$NOW.log 2>&1
+	eval "$cmd" >>$ARCHIVE/${TODAY}/${logname}_$NOW.log 2>&1
+    fi
     find $ARCHIVE/ -name "${logname}_*.log" -mmin +$(($RET*60)) -exec rm "{}" \;
 } # CollectData
 
@@ -114,7 +117,8 @@ CollectData(){
 
 #Not all versions of top has "-w"
 #top -w 132 -n1 &>/dev/null && TOPCOL="-w $COLUMNS " || TOPCOL=""
-top -w 132 -n1 &>/dev/null && TOPCOL="-w 255 " || TOPCOL=""
+[ -z "$TERM" ] && export TERM=dumb
+top -w 255 -b -c -n 1 -i &>/dev/null && TOPCOL="-w 255 " || TOPCOL=""
 
 echo $(date +%F\ %T) "Using pid file $PIDFILE"
 echo $(date +%F\ %T) "Saving log to $LOGFILE"

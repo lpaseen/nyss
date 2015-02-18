@@ -113,7 +113,8 @@ CollectData(){
 
 
 #Not all versions of top has "-w"
-top -w 132 -n1 &>/dev/null && TOPCOL="-w $COLUMNS " || TOPCOL=""
+#top -w 132 -n1 &>/dev/null && TOPCOL="-w $COLUMNS " || TOPCOL=""
+top -w 132 -n1 &>/dev/null && TOPCOL="-w 255 " || TOPCOL=""
 
 echo $(date +%F\ %T) "Using pid file $PIDFILE"
 echo $(date +%F\ %T) "Saving log to $LOGFILE"

@@ -24,6 +24,8 @@
 #	Don't save files if free space is <100MiB
 #2015-01-27  Peter Sjoberg <peters-gh@techwiz.ca>
 #	Fixed syntax error with older version of top
+#2015-02-18  Peter Sjoberg <peters-src@techwiz.ca>
+#	set TERM=dumb if not already defined
 #
 #TODO:
 # Add code to have max size of $ARCHIVE and a min free on the disk
@@ -115,9 +117,9 @@ CollectData(){
 #
 
 
+[ -z "$TERM" ] && export TERM=dumb
 #Not all versions of top has "-w"
 #top -w 132 -n1 &>/dev/null && TOPCOL="-w $COLUMNS " || TOPCOL=""
-[ -z "$TERM" ] && export TERM=dumb
 top -w 255 -b -c -n 1 -i &>/dev/null && TOPCOL="-w 255 " || TOPCOL=""
 
 echo $(date +%F\ %T) "Using pid file $PIDFILE"

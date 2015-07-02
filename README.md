@@ -14,15 +14,17 @@ Usage:
 </pre>
 
 Currently saved is the output of<br>
- ps auxww --sort=-pcpu|head -33<br>
- ps auxww --sort=-rss|head -33<br>
- ps auxww --sort=-vsz|head -33<br>
- ps auxfww<br>
- ps axH|wc -l<br>
- top -w $COLUMNS -b -c -n 2 -i<br>
- free<br>
- vmstat 1 5<br>
- LINES=$(iostat -tNkx|wc -l);iostat -tNkx 2 2|sed -n "$(($LINES+1)),\$p"<br>
- netstat -ntulpae<br>
- netstat -i<br>
- netstat -s<br>
+<ul>
+ <li>ps auxww --sort=-pcpu|head -33</li>
+ <li>ps auxww --sort=-rss|head -33</li>
+ <li>ps auxww --sort=-vsz|head -33</li>
+ <li>ps auxfww</li>
+ <li>ps axH|wc -l</li>
+ <li>top -w $COLUMNS -b -c -n 2 -i</li>
+ <li>free</li>
+ <li>vmstat 1 5</li>
+ <li>LINES=$(iostat -tNkx|wc -l);iostat -tNkx 2 2|sed -n "$(($LINES+1)),\$p"</li>
+ <li>netstat -ntulpae</li>
+ <li>netstat -i</li>
+ <li>netstat -s</li>
+</ul>

@@ -4,7 +4,8 @@
 # possible usage: save it in ~/nyss and start with
 #	nohup ~/nyss/nyss.sh &>~/nyss/nyss.log &
 #
-#License: GPL
+# Source url: https://github.com/lpaseen/nyss
+# License: GPL
 #
 #History:
 #2013-07-12  Peter Sjoberg <peters-gh@techwiz.ca>

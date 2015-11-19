@@ -76,7 +76,7 @@ else
 	fi
         exit
     else
-        echo "Stale pidfile found, deleting it." >>$LOGFILE 
+        echo "$NOWSTAT; Stale pidfile found, deleting it." >>$LOGFILE 
         echo "$MYPID" > "$PIDFILE"
     fi
 fi

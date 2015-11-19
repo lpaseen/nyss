@@ -28,7 +28,7 @@
 #2015-02-18  Peter Sjoberg <peters-src AT techwiz.ca>
 #	set TERM=dumb if not already defined
 #2015-11-19  Peter Sjoberg <peters-src AT techwiz DOT ca>
-#	Changed minfree process, leave 20% or 1G and log if limit is hit.
+#	Changed minfree process, leave 20% or 500MB and log if limit is hit.
 #
 #TODO:
 # Add code to have max size of $ARCHIVE and a min free on the disk

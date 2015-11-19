@@ -8,25 +8,27 @@
 # License: GPL
 #
 #History:
-#2013-07-12  Peter Sjoberg <peters-gh@techwiz.ca>
+#2013-07-12  Peter Sjoberg <peters-gh AT techwiz.ca>
 #       Ver alpha 0.01
-#2013-07-23  Peter Sjoberg <peters-gh@techwiz.ca>
+#2013-07-23  Peter Sjoberg <peters-gh AT techwiz.ca>
 #	Fixed up misc bugs, added "ps auxf" and "top"
-#2013-09-02  Peter Sjoberg <peters-gh@techwiz.ca>
+#2013-09-02  Peter Sjoberg <peters-gh AT techwiz.ca>
 #	datestamp the archive directory
-#2014-03-23  Peter Sjoberg <peters-gh@techwiz.ca>
+#2014-03-23  Peter Sjoberg <peters-gh AT techwiz.ca>
 #	Add hostname to archive directory
 #	if /var/run isn't writable, keep the pidfile to $BASEDIR/run
-#2014-03-24  Peter Sjoberg <peters-gh@techwiz.ca>
+#2014-03-24  Peter Sjoberg <peters-gh AT techwiz.ca>
 #	Added hostname also to pidfile path to handle when run from shared directory
-#2014-09-17  Peter Sjoberg <peters-gh@techwiz.ca>
+#2014-09-17  Peter Sjoberg <peters-gh AT techwiz.ca>
 #	Compress older days - so we can ceep a few more days without eating up all disk space
-#2014-09-22  Peter Sjoberg <peters-gh@techwiz.ca>
+#2014-09-22  Peter Sjoberg <peters-gh AT techwiz.ca>
 #	Don't save files if free space is <100MiB
-#2015-01-27  Peter Sjoberg <peters-gh@techwiz.ca>
+#2015-01-27  Peter Sjoberg <peters-gh AT techwiz.ca>
 #	Fixed syntax error with older version of top
-#2015-02-18  Peter Sjoberg <peters-src@techwiz.ca>
+#2015-02-18  Peter Sjoberg <peters-src AT techwiz.ca>
 #	set TERM=dumb if not already defined
+#2015-11-19  Peter Sjoberg <peters-src AT techwiz DOT ca>
+#	Changed minfree process, leave 20% or 1G and log if limit is hit.
 #
 #TODO:
 # Add code to have max size of $ARCHIVE and a min free on the disk
@@ -90,7 +92,9 @@ export COLUMNS=511
 DEFINTERVAL=60 # unit seconds, save every 60 secods
 DEFRETENTION=$((24*2)) # hours, keep 2 days
 TARRETENTION=14 # days, keep tar files for 14 days
-MINFREE=100 # Don't save anything if it's less than 100MiB free
+MINFREE=500 # Don't save anything if it's less than 500MiB free
+MINPCT=$(df -mP $ARCHIVE|tail -1|awk '{print $2*.20}')
+[ $MINPCT -gt $MINFREE ] && MINFREE=$MINPCT
 
 ################################################################
 #Run a command and save the data to a logfile
@@ -99,8 +103,8 @@ CollectData(){
     logname="$1"
     RET="$2"
     cmd="$3"
-    [ ! -d $ARCHIVE/${TODAY} ] && mkdir -p $ARCHIVE/${TODAY}
-    if [ $(df -mP .|tail -1|awk '{print $4}') -gt $MINFREE ];then
+    if [ $(df -mP $ARCHIVE|tail -1|awk '{print $4}') -gt $MINFREE ];then
+	[ ! -d $ARCHIVE/${TODAY} ] && mkdir -p $ARCHIVE/${TODAY}
 	echo "#$cmd" >>$ARCHIVE/${TODAY}/${logname}_$NOW.log 2>&1
 	eval "$cmd" >>$ARCHIVE/${TODAY}/${logname}_$NOW.log 2>&1
     fi
@@ -130,6 +134,10 @@ while  [ -e "${PIDFILE}" ];do
     NOW=$(date +%F_%H%M%S)
     TODAY=$(date +%F)
 
+    if [ $(df -mP $ARCHIVE|tail -1|awk '{print $4}') -le $MINFREE ];then
+	echo "$(date +%F\ %T): Low on free space, skipping collection for this round"
+    fi
+    #Still do the call, it still does the cleanup part
     CollectData ps_auxww_pcpu $DEFRETENTION "ps auxww --sort=-pcpu|head -33"
     CollectData ps_auxww_rss  $DEFRETENTION "ps auxww --sort=-rss|head -33"
     CollectData ps_auxww_vsz  $DEFRETENTION "ps auxww --sort=-vsz|head -33"
@@ -139,11 +147,11 @@ while  [ -e "${PIDFILE}" ];do
     CollectData free          $DEFRETENTION "free"
     CollectData vmstat        $DEFRETENTION "vmstat 1 5"
     CollectData iostat        $DEFRETENTION 'LINES=$(iostat -tNkx|wc -l);iostat -tNkx 2 2|sed -n "$(($LINES+1)),\$p"'
-#
+    #
     CollectData netstat_a $DEFRETENTION "netstat -ntulpae"
     CollectData netstat_i $DEFRETENTION "netstat -i"
     CollectData netstat_s $DEFRETENTION "netstat -s"
-#
+    #
 
     # pack up yesterday (if not already done)
     YESTERDAY=$(date +%F -d yesterday)

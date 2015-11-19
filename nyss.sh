@@ -2,7 +2,7 @@
 #
 #Purpose: Save some logs of what the system look like at different points in time
 # possible usage: save it in ~/nyss and start with
-#	nohup ~/nyss/nyss.sh &>~/nyss/nyss.log &
+#	nohup ~/nyss/nyss.sh &>~/nyss/nyss.log </dev/null &
 #
 # Source url: https://github.com/lpaseen/nyss
 # License: GPL

@@ -93,7 +93,7 @@ DEFINTERVAL=60 # unit seconds, save every 60 secods
 DEFRETENTION=$((24*2)) # hours, keep 2 days
 TARRETENTION=14 # days, keep tar files for 14 days
 MINFREE=500 # Don't save anything if it's less than 500MiB free
-MINPCT=$(df -mP $ARCHIVE|tail -1|awk '{print $2*.20}')
+MINPCT=$(df -mP $ARCHIVE|tail -1|awk '{print $2*.10}')
 [ $MINPCT -gt $MINFREE ] && MINFREE=$MINPCT
 
 ################################################################

@@ -41,9 +41,14 @@
 #$Id:$
 #
 
+if ! which strings  &>/dev/null;then
+    echo "\"strings\" not installed - that is required."
+    exit 91
+fi
 
 BASEDIR=${0%/*}
 BASENAME=$(basename $0 .sh)
+[ "$BASENAME" == "sh" ] && BASENAME=nyss # when executed from "at"
 [ "$BASEDIR" == ${0} ] && BASEDIR=$PWD
 [ "${BASEDIR}" == "." ] && BASEDIR=$PWD
 
@@ -93,7 +98,7 @@ DEFINTERVAL=60 # unit seconds, save every 60 secods
 DEFRETENTION=$((24*2)) # hours, keep 2 days
 TARRETENTION=14 # days, keep tar files for 14 days
 MINFREE=500 # Don't save anything if it's less than 500MiB free
-MINPCT=$(df -mP $ARCHIVE|tail -1|awk '{print $2*.10}')
+MINPCT=$(df -mP $ARCHIVE|tail -1|awk '{print int($2*.10)}')
 [ $MINPCT -gt $MINFREE ] && MINFREE=$MINPCT
 
 ################################################################
@@ -144,7 +149,7 @@ while  [ -e "${PIDFILE}" ];do
     CollectData ps_auxfww     $DEFRETENTION "ps auxfww"
     CollectData ps_axHwc      $DEFRETENTION "ps axH|wc -l"
     CollectData top           $DEFRETENTION "top ${TOPCOL}-b -c -n 2 -i"
-    CollectData free          $DEFRETENTION "free"
+    CollectData free_-m       $DEFRETENTION "free -m"
     CollectData vmstat        $DEFRETENTION "vmstat 1 5"
     CollectData iostat        $DEFRETENTION 'LINES=$(iostat -tNkx|wc -l);iostat -tNkx 2 2|sed -n "$(($LINES+1)),\$p"'
     #
@@ -152,6 +157,9 @@ while  [ -e "${PIDFILE}" ];do
     CollectData netstat_i $DEFRETENTION "netstat -i"
     CollectData netstat_s $DEFRETENTION "netstat -s"
     #
+    CollectData cpuspeed  $DEFRETENTION "grep -E '^processor|model name|cpu MHz|^\$' /proc/cpuinfo"
+    #
+    which journalctl &>/dev/null && CollectData journalctl_1min $DEFRETENTION "journalctl --since='1minute ago'"
 
     # pack up yesterday (if not already done)
     YESTERDAY=$(date +%F -d yesterday)
@@ -159,11 +167,13 @@ while  [ -e "${PIDFILE}" ];do
 	[ -d $ARCHIVE/${YESTERDAY} ] && echo "tar -cjf $ARCHIVE/${YESTERDAY}.tar.bz2 $ARCHIVE/${YESTERDAY}" && tar -cjf $ARCHIVE/${YESTERDAY}.tar.bz2 $ARCHIVE/${YESTERDAY}
     fi
     #and purge away very old tar files
-    find $ARCHIVE/ -name "*.tar.bz2" -mtime +$TARRETENTION -exec rm "{}" \;
+    #find $ARCHIVE/ -name "*.tar.bz2" -mtime +$TARRETENTION -exec rm "{}" \;
+    find $ARCHIVE/ -name "*.tar.bz2" -mtime +$TARRETENTION -delete
 
     # delete empty dates directories
     rmdir $ARCHIVE/20[1-9][0-9]-[0-1][0-9]-[0-3][0-9] &>/dev/null # ignore errors due to not empty
 
+    sync
     sleep $DEFINTERVAL
 done
 

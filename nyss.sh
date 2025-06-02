@@ -31,14 +31,15 @@
 #	Changed minfree process, leave 20% or 500MB and log if limit is hit.
 #
 #TODO:
-# Add code to have max size of $ARCHIVE and a min free on the disk
-#   starting to delete oldest files once limit is reached
 # Upload files to central location
 # Handle errors
 # Allow different log interval
-# make an rpm
+# make a package
 #
-#$Id:$
+#For the sudo commands to work, create a sudoers file (or run as root)
+# #/etc/sudoers.d/nyss
+# Cmnd_Alias NYSS=/usr/bin/lsof -i tcp, /usr/bin/lsof -i udp, /usr/bin/iotop -oP -b -n 3 -d 5  -t -c
+# %nyss    ALL =  NOPASSWD: NYSS
 #
 
 if ! which strings  &>/dev/null;then

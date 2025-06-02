@@ -151,11 +151,16 @@ while  [ -e "${PIDFILE}" ];do
     CollectData top           $DEFRETENTION "top ${TOPCOL}-b -c -n 2 -i"
     CollectData free_-m       $DEFRETENTION "free -m"
     CollectData vmstat        $DEFRETENTION "vmstat 1 5"
-    CollectData iostat        $DEFRETENTION 'LINES=$(iostat -tNkx|wc -l);iostat -tNkx 2 2|sed -n "$(($LINES+1)),\$p"'
+    #
+    CollectData iostat    $DEFRETENTION 'LINES=$(iostat -tNkx|wc -l);iostat -tNkx 2 2|sed -n "$(($LINES+1)),\$p"'
+    #CollectData iotop     $DEFRETENTION "sudo iotop -oP -b -n 3 -d 5  -t -c"
     #
     CollectData netstat_a $DEFRETENTION "netstat -ntulpae"
     CollectData netstat_i $DEFRETENTION "netstat -i"
     CollectData netstat_s $DEFRETENTION "netstat -s"
+    #
+    #CollectData lsof_tcp  $DEFRETENTION "sudo lsof -i tcp"
+    #CollectData lsof_udp  $DEFRETENTION "sudo lsof -i udp"
     #
     CollectData cpuspeed  $DEFRETENTION "grep -E '^processor|model name|cpu MHz|^\$' /proc/cpuinfo"
     #

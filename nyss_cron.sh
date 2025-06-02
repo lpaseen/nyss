@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#
+#  */5 * * * * /home/peters/nyss/nyss_cron.sh
 #
 
 BASEDIR=${0%/*}
